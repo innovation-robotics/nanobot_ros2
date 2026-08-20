@@ -1,0 +1,57 @@
+/**:
+  ros__parameters:
+    marker_size: 0.08
+    aruco_dictionary_id: "DICT_4X4_250"   # <-- MUST be in quotes!
+    image_is_rectified: true
+    camera_frame: "camera_optical_frame"
+    reference_frame: "map"
+    use_camera_info: true
+
+# # # Inside my_robot_drivers/config/aruco_params.yaml
+# # /aruco_marker_publisher:
+# #   ros__parameters:
+# #     # Physical size of your marker in meters (8 cm = 0.08 m)
+# #     marker_size: 0.08
+
+# #     # ArUco dictionary (Common choices: 4X4_50, 4X4_250, 5X5_250)
+# #     # Match this to the exact dictionary you printed!
+# #     aruco_dictionary_id: "DICT_4X4_250"
+
+# #     # Frame IDs
+# #     camera_frame: "camera_optical_frame"
+# #     reference_frame: "map"
+
+# #     # Enable TF broadcasting from camera to detected markers
+# #     publish_tf: true
+
+# # # /**:
+# # #   ros__parameters:
+# # #     marker_size: 0.08          # Measure exact inner black square size in meters
+# # #     dictionary_type: "DICT_4X4_250"  # EXACT match from screenshot!
+# # #     marker_id: 1               # EXACT ID from screenshot!
+# # #     camera_frame: "camera_optical_frame"
+# # #     reference_frame: "map"
+# # #     marker_frame: "marker_1"   # Match the ID 1 static frame
+
+
+# # marker_publisher:
+# #   ros__parameters:
+# #     marker_size: 0.08              # Physical size of the marker side in meters
+# #     aruco_dictionary_id: "DICT_4X4_250"  # Dictionary type used for the markers
+# #     image_topic: "/camera/image_raw"     # Subscribed RGB image topic
+# #     camera_info_topic: "/camera/camera_info" # Camera intrinsic calibration topic
+# #     camera_frame: "camera_optical_frame"     # Frame reference ID
+# #     detect_inverted_marker: false    
+
+# aruco_marker_publisher:
+#   ros__parameters:
+#     marker_size: 0.08
+#     aruco_dictionary_id: "DICT_4X4_250"
+#     # Adaptive threshold parameters to improve weak/distant detections:
+#     adaptiveThreshWinSizeMin: 3
+#     adaptiveThreshWinSizeMax: 23
+#     adaptiveThreshWinSizeStep: 10
+#     minMarkerPerimeterRate: 0.02   # Helps detect smaller / farther markers
+#     camera_frame: "camera_optical_frame"
+#     reference_frame: "map"
+#     marker_frame: "marker_1"   # Match the ID 1 static frame

@@ -1,0 +1,14 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/my_robot_drivers/lib/python3.10/site-packages",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/my_robot_drivers/lib/python3.10/site-packages",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

@@ -1,0 +1,57 @@
+/**:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # 1. Wheel Odometry Input
+    odom0: /odom2
+    odom0_config: [true,  true,  false,   # Position X, Y, Z
+                   false, false, true,    # Yaw
+                   true,  true,  false,   # Velocities
+                   false, false, true,
+                   false, false, false]
+    odom0_differential: true
+
+    # 2. ArUco Marker Input
+    pose0: /aruco/pose
+    pose0_config: [true,  true,  false,   # Position X, Y, Z
+                   false, false, true,    # Yaw
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_differential: false
+
+# /**:
+#   ros__parameters:
+#     frequency: 30.0
+#     two_d_mode: true
+#     publish_tf: true
+
+#     map_frame: map
+#     odom_frame: odom
+#     base_link_frame: base_footprint
+#     world_frame: map                  # Global mode so absolute ArUco poses work directly
+
+#     # 1. Wheel Odometry (RELATIVE / DELTA MODE)
+#     odom0: /odom2
+#     odom0_config: [true,  true,  false,   # Position X, Y, Z
+#                    false, false, true,    # Yaw
+#                    true,  true,  false,   # Velocities
+#                    false, false, true,
+#                    false, false, false]
+#     odom0_differential: true          # <--- Ignores (0,0) startup origin; uses tick deltas only
+
+#     # 2. ArUco Marker Vision (ABSOLUTE MAP MODE)
+#     pose0: /aruco/pose
+#     pose0_config: [true,  true,  false,   # Position X, Y
+#                    false, false, true,    # Yaw
+#                    false, false, false,
+#                    false, false, false,
+#                    false, false, false]
+#     pose0_differential: false         # <--- Ground truth absolute positioning

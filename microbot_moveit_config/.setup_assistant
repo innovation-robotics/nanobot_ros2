@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: my_robot_description
+    relative_path: urdf/mobile_microbot.xacro
+  srdf:
+    relative_path: config/mobile_microbot.srdf
+  package_settings:
+    author_name: Ahmed Waly
+    author_email: robotsrepublic2000@gmail.com
+    generated_timestamp: 1786791136
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
