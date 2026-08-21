@@ -32,8 +32,10 @@ class ArucoLocalizationPublisher(Node):
         # }
         self.marker_map_poses = {
             0: {'pos': np.array([0.0, 0.0, 0.1275]), 'rot': np.array([-45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
-            1: {'pos': np.array([1.22, 0.0, 0.1275]), 'rot': np.array([0.0, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
-            2: {'pos': np.array([2.42, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])}            
+            1: {'pos': np.array([1.22, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
+            2: {'pos': np.array([2.13, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},           
+            3: {'pos': np.array([2.43, 0.605, 0.1275]), 'rot': np.array([-90.0*deg_to_rad, 0.0, 90.0 * deg_to_rad])},         
+            4: {'pos': np.array([2.13, 1.21, 0.1275]), 'rot': np.array([0.0, 0.0, 90.0 * deg_to_rad])}            
         }
 
         # Initialize ArUco Detector
@@ -119,6 +121,7 @@ class ArucoLocalizationPublisher(Node):
         T_map_marker = marker_map['pos'].reshape((3, 1))
 
         # 1. Pose of Marker in Camera Optical Frame from solvePnP
+        # transform a point from the marker frame to the camera frame
         R_cam_marker, _ = cv2.Rodrigues(rvec)
         T_cam_marker = tvec.reshape((3, 1))
 
@@ -161,9 +164,40 @@ class ArucoLocalizationPublisher(Node):
         pose_msg.pose.pose.orientation.z = quat[2]
         pose_msg.pose.pose.orientation.w = quat[3]
 
-        cov = np.zeros((6, 6), dtype=np.float64)
-        np.fill_diagonal(cov, [0.02, 0.02, 0.02, 0.05, 0.05, 0.05])
-        pose_msg.pose.covariance = cov.flatten().tolist()
+        # cov = np.zeros((6, 6), dtype=np.float64)
+        # np.fill_diagonal(cov, [0.02, 0.02, 0.02, 0.05, 0.05, 0.05])
+        # pose_msg.pose.covariance = cov.flatten().tolist()
+
+
+
+        # 1. Calculate Euclidean distance from camera to marker
+        distance = math.sqrt(T_cam_marker[0]**2 + T_cam_marker[1]**2 + T_cam_marker[2]**2)
+
+        # 2. Base covariance for close-range detection (< 1.0 meter)
+        base_pos_var = 0.01   # ~10cm confidence
+        base_yaw_var = 0.05   # ~12 deg confidence
+
+        # 3. Dynamic Covariance Scaling
+        # Option A: Hard Threshold (> 1.5 meters -> extremely high uncertainty)
+        if distance > 1.5:
+            pos_var = 9999.0  # EKF will ignore position completely
+            yaw_var = 9999.0  # EKF will ignore orientation completely
+        else:
+            # Option B: Quadratic scaling with distance (Variance scales with distance^2)
+            scale_factor = (distance / 1.0) ** 2
+            pos_var = base_pos_var * scale_factor
+            yaw_var = base_yaw_var * scale_factor
+
+        # 4. Populate 6x6 Covariance Matrix (Flattened to 36 elements)
+        cov = [0.0] * 36
+        cov[0]  = pos_var    # X variance
+        cov[7]  = pos_var    # Y variance
+        cov[14] = 9999.0     # Z (unused in 2D mode)
+        cov[21] = 9999.0     # Roll
+        cov[28] = 9999.0     # Pitch
+        cov[35] = yaw_var    # Yaw variance
+
+        pose_msg.pose.covariance = cov
 
         self.pose_pub.publish(pose_msg)
 
