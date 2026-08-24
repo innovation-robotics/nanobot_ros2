@@ -18,19 +18,19 @@
     <!-- PROPERTY DEFINITIONS (Tweak these to match physical dimensions) -->
     <!-- =================================================================== -->
     <xacro:property name="chassis_length" value="0.250"/> <!-- 25 cm -->
-    <xacro:property name="chassis_width"  value="0.180"/> <!-- 18 cm -->
+    <xacro:property name="chassis_width"  value="0.20"/> <!-- 18 cm -->
     <xacro:property name="chassis_height" value="0.1075"/> <!-- 6 cm 0.060--> 
     <xacro:property name="chassis_mass"   value="0.800"/> <!-- 800 g -->
 
     <xacro:property name="wheel_radius"  value="0.033"/> <!-- 66 mm diameter -->
     <xacro:property name="wheel_thickness" value="0.026"/> <!-- 26 mm width -->
     <xacro:property name="wheel_mass"      value="0.050"/> <!-- 50 g -->
-    <xacro:property name="wheel_offset_y"  value="0.105"/> <!-- Track width center-to-wheel -->
-    <xacro:property name="wheel_offset_x"  value="0.11"/> <!-- Axle position along length -->
+    <xacro:property name="wheel_offset_y"  value="0.1165"/> <!-- Track width center-to-wheel -->
+    <xacro:property name="wheel_offset_x"  value="0.0"/> <!-- Axle position along length -->
 
     <xacro:property name="caster_radius"  value="0.015"/> <!-- 30 mm caster ball -->
     <xacro:property name="caster_mass"    value="0.030"/>
-    <xacro:property name="caster_offset_x" value="-0.080"/> <!-- Front/rear caster position -->
+    <xacro:property name="caster_offset_x" value="-0.185"/> <!-- Front/rear caster position -->
 
     <!-- =================================================================== -->
     <!-- 1. BASE FOOTPRINT (Ground plane z=0) -->
@@ -48,20 +48,20 @@
     <!-- =================================================================== -->
     <link name="base_link">
         <visual>
-            <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+            <origin xyz="-0.105 0 ${chassis_height/2}" rpy="0 0 0"/>
             <geometry>
                 <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
             </geometry>
             <material name="wood_mdf"/>
         </visual>
         <collision>
-            <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+            <origin xyz="-0.105 0 ${chassis_height/2}" rpy="0 0 0"/>
             <geometry>
                 <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
             </geometry>
         </collision>
         <xacro:inertial_box mass="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
-            <origin xyz="0 0 ${chassis_height/2}" rpy="0 0 0"/>
+            <origin xyz="-0.105 0 ${chassis_height/2}" rpy="0 0 0"/>
         </xacro:inertial_box>
     </link>
 

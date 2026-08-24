@@ -31,7 +31,9 @@ setup(
             'odom_broker_node = my_robot_drivers.odom_broker:main',
             'arm_trajectory_bridge = my_robot_drivers.arm_trajectory_bridge:main',
             'esp32_cam_node = my_robot_drivers.esp32_cam_node:main',
-            'aruco_tf_node.py = my_robot_drivers.aruco_tf_node:main',
+            'aruco_tf_node = my_robot_drivers.aruco_tf_node:main',
+            'u_track_pure_pursuit = my_robot_drivers.u_track_pure_pursuit:main',
+            'u_track_corner_turn = my_robot_drivers.u_track_corner_turn:main',
         ],
     },
 )

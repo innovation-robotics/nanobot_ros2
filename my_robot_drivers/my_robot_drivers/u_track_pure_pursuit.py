@@ -73,7 +73,7 @@ class PurePursuitUTrack(Node):
 
         self.get_logger().info(f"Robot Position: X={self.robot_pos[0]:.2f}, Y={self.robot_pos[1]:.2f}")
 
-        
+
         # Extract yaw orientation from quaternion
         q = msg.pose.pose.orientation
         siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
@@ -171,7 +171,7 @@ class PurePursuitUTrack(Node):
 
         cmd.linear.x = v_lin
         cmd.angular.z = w_ang
-        self.cmd_pub.publish(cmd)
+        # self.cmd_pub.publish(cmd)
 
 def main(args=None):
     rclpy.init(args=args)

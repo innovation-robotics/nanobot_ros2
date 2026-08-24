@@ -17,7 +17,7 @@
         <parent link="base_link"/>
         <child link="camera_optical_frame"/>
         <!-- Mounted 6cm forward on top deck -->
-        <origin xyz="0.125 0 ${camera_elevation}" rpy="-1.570796327 0 -1.570796327"/>
+        <origin xyz="0.013 0 ${camera_elevation}" rpy="-1.570796327 0 -1.570796327"/>
     </joint>
 
     <!-- Link: Frame ID used by ROS 2 /scan message -->

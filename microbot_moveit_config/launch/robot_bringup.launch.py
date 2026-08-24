@@ -9,6 +9,9 @@ from moveit_configs_utils import MoveItConfigsBuilder
 def generate_launch_description():
     pkg_drivers = get_package_share_directory('my_robot_drivers')
 
+    # Path to your EKF YAML config file inside the package share folder
+    ekf_config_path = os.path.join(pkg_drivers, 'config', 'ekf_fusion.yaml')
+
     # 0. Micro-ROS Agent Node
     microros_agent = Node(
         package='micro_ros_agent',
@@ -35,13 +38,14 @@ def generate_launch_description():
     # 1. MoveIt Configurations
     moveit_config = MoveItConfigsBuilder("mobile_microbot", package_name="microbot_moveit_config").to_moveit_configs()
 
-    # 2. Odometry Broker Node (Publishes odom -> base_footprint)
+    # 2. Odometry Broker Node
+    # Note: Set 'publish_tf': False if ekf_node is publishing the odom -> base_footprint frame
     odom_broker_node = Node(
         package="my_robot_drivers",
         executable="odom_broker_node",
         output="screen",
         parameters=[{
-            'publish_tf': True,
+            'publish_tf': False,  # <--- Set to False so EKF handles TF publishing
             'odom_frame': 'odom',
             'base_frame': 'base_footprint'
         }]
@@ -67,7 +71,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Robot State Publisher (Publishes base_link -> camera_link -> camera_optical_frame)
+    # 5. Robot State Publisher
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -76,7 +80,16 @@ def generate_launch_description():
         parameters=[moveit_config.robot_description]
     )
 
-    # 6. MoveGroup Node
+    # 6. Robot Localization (EKF Node)
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config_path]
+    )
+
+    # 7. MoveGroup Node
     move_group_node = Node(
         package='moveit_ros_move_group',
         executable='move_group',
@@ -84,7 +97,7 @@ def generate_launch_description():
         parameters=[moveit_config.to_dict()]
     )
 
-    # 7. RViz2 Visualizer
+    # 8. RViz2 Visualizer
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -94,7 +107,7 @@ def generate_launch_description():
         arguments=['-d', os.path.join(get_package_share_directory("microbot_moveit_config"), "config", "moveit.rviz")]
     )
 
-    # 8. Include ArUco Detection & Room Map TFs
+    # 9. Include ArUco Detection & Room Map TFs
     aruco_detection_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_drivers, 'launch', 'aruco_detection.launch.py')
@@ -108,7 +121,8 @@ def generate_launch_description():
         arm_trajectory_bridge_node,
         joint_state_publisher_node,
         robot_state_publisher_node,
+        ekf_node,                   # <--- Added EKF filter node here
         move_group_node,
         rviz_node,
-        aruco_detection_launch  # <--- Integrated here!
+        aruco_detection_launch
     ])

@@ -45,7 +45,7 @@ def generate_launch_description():
 
     aruco_detector_node = Node(
         package='my_robot_drivers',         # Make sure this matches your package name
-        executable='aruco_tf_node.py',      # Executable script name
+        executable='aruco_tf_node',      # Executable script name
         name='aruco_marker_publisher',
         output='screen',
         parameters=[{

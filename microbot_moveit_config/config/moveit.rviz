@@ -7,8 +7,10 @@ Panels:
         - /MotionPlanning1
         - /MotionPlanning1/Planned Path1
         - /Image1
+        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
-    Tree Height: 82
+    Tree Height: 70
   - Class: rviz_common/Help
     Name: Help
   - Class: rviz_common/Views
@@ -313,51 +315,53 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
         Gripper_Idol_Gear:
-          Value: true
+          Value: false
         Gripper_Servo_Gear:
-          Value: true
+          Value: false
         base_footprint:
           Value: true
         base_link:
-          Value: true
+          Value: false
         camera_optical_frame:
-          Value: true
+          Value: false
         caster_wheel:
-          Value: true
+          Value: false
         left_wheel:
-          Value: true
+          Value: false
         link0:
-          Value: true
+          Value: false
         link1:
-          Value: true
+          Value: false
         link2:
-          Value: true
+          Value: false
         link3:
-          Value: true
+          Value: false
         link4:
-          Value: true
+          Value: false
         map:
           Value: true
         marker_0:
           Value: true
         marker_1:
           Value: true
+        marker_2:
+          Value: true
         odom:
           Value: true
         right_wheel:
-          Value: true
+          Value: false
         robot_hand:
-          Value: true
+          Value: false
         robot_leftfinger:
-          Value: true
+          Value: false
         robot_link7:
-          Value: true
+          Value: false
         robot_rightfinger:
-          Value: true
+          Value: false
         wrist:
-          Value: true
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
@@ -365,14 +369,17 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
+          marker_0:
+            {}
           marker_1:
+            {}
+          marker_2:
             {}
           odom:
             base_footprint:
               base_link:
                 camera_optical_frame:
-                  marker_0:
-                    {}
+                  {}
                 caster_wheel:
                   {}
                 left_wheel:
@@ -413,7 +420,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.3940064907073975
+      Distance: 3.4515089988708496
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -428,10 +435,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5000001788139343
+      Pitch: 0.22500024735927582
       Target Frame: odom
       Value: Orbit (rviz_default_plugins)
-      Yaw: 1.862000584602356
+      Yaw: 0.7770016193389893
     Saved: ~
 Window Geometry:
   Displays:
@@ -447,7 +454,7 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003a2fc0200000006fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000003f00fffffffb000000100044006900730070006c006100790073010000003b000000d3000000c700fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000114000001740000016900fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a00560069006500770073010000028e000000a0000000a000fffffffb0000000a0049006d0061006700650100000334000000a90000002800ffffff00000480000003a200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b4000003a2fc0200000006fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000003f00fffffffb000000100044006900730070006c006100790073010000003b000000c7000000c700fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000108000001690000016900fffffffb0000000800480065006c0070000000029a0000006e0000006e00fffffffb0000000a005600690065007700730100000277000000a0000000a000fffffffb0000000a0049006d006100670065010000031d000000c00000002800ffffff00000480000003a200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1850
