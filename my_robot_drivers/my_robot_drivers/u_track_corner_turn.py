@@ -18,8 +18,12 @@ from nav_msgs.msg import Odometry
 
 # MoveIt Action Messages
 from moveit_msgs.action import MoveGroup
-from moveit_msgs.msg import Constraints, JointConstraint
+from moveit_msgs.msg import Constraints, JointConstraint, PositionConstraint
+from shape_msgs.msg import SolidPrimitive
 import time
+from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.msg import PositionIKRequest
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 # ==========================================
 # 1. TASK DATA STRUCTURE DEFINITIONS
@@ -29,6 +33,7 @@ class TaskType(Enum):
     GO_TO = auto()
     ROTATE_IN_PLACE = auto()
     PICK = auto()
+    PICK_OBJECT = auto()
     PLACE = auto()
 
 @dataclass
@@ -64,7 +69,9 @@ class CornerTurnUTrack(Node):
         self.srdf_states = {
             # ARM Group Joint Targets
             "arm_ready": {"joint1": 0.0, "joint2": 0.0, "joint3": 0.0, "joint4": 0.0, "wrist_joint": 0.0},
-            "arm_pick":  {"joint1": 0.0, "joint2": -1.0935, "joint3": -0.8852, "joint4": -1.1629, "wrist_joint": 0.0},
+            "arm_pick_place":  {"joint1": 0.0, "joint2": -1.0935, "joint3": -0.8852, "joint4": -1.1629, "wrist_joint": 0.0},
+            "arm_left":  {"joint1": 0.0, "joint2": 0.0, "joint3": 0.34906585, "joint4": -0.34906585, "wrist_joint": 0.0},
+            # "arm_left":  {"joint1": 0.0, "joint2": 0.0, "joint3": -1.570796327, "joint4": -1.570796327, "wrist_joint": 0.0},
             
             # HAND Group Joint Targets
             "hand_open": {
@@ -91,15 +98,21 @@ class CornerTurnUTrack(Node):
         # 2. DEFINE TASK PLAN QUEUE
         # ==========================================
         self.task_queue: List[RobotTask] = [
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.0, 0.65])),
-            RobotTask(type=TaskType.PICK, item_id="Box_A"),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.0, 0.60])),
+            RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=-math.pi),
+            RobotTask(type=TaskType.PICK_OBJECT, item_id="Box_A"),
+            RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=-math.pi/2.0),
             RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.0, 0.35])),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=0.0),
             RobotTask(type=TaskType.GO_TO, target_pos=np.array([2.13, 0.35])),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=math.pi / 2),
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([2.13, 0.8])),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([2.13, 1.0])),
             RobotTask(type=TaskType.PLACE, item_id="Box_A")
         ]
+        
+        # self.task_queue: List[RobotTask] = [
+        #     RobotTask(type=TaskType.PICK_OBJECT, item_id="Box_A")
+        # ]
         
         self.current_task_idx = 0
         self.manipulation_in_progress = False
@@ -107,7 +120,8 @@ class CornerTurnUTrack(Node):
         # State Variables
         self.robot_pos = None
         self.robot_yaw = None
-        
+        self.obj18_pos = None
+
         # E-Stop State
         self.is_e_stopped = False
         self.running = True
@@ -118,6 +132,7 @@ class CornerTurnUTrack(Node):
         # ROS 2 Interfaces
         self.odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.odom_callback, 10)
         self.goal_sub = self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
+        self.obj18_sub = self.create_subscription(PoseWithCovarianceStamped, '/aruco/pose18', self.obj18_pose_callback, 10)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
         # Control Loop Timer (20 Hz)
@@ -168,6 +183,10 @@ class CornerTurnUTrack(Node):
         cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         self.robot_yaw = math.atan2(siny_cosp, cosy_cosp)
 
+    def obj18_pose_callback(self, msg: PoseWithCovarianceStamped):
+        self.obj18_pos = np.array([msg.pose.pose.position.x, msg.pose.pose.position.y])
+        # self.get_logger().info(f"obj18:{self.obj18_pos}")
+
     def normalize_angle(self, angle):
         while angle > math.pi:
             angle -= 2.0 * math.pi
@@ -180,6 +199,114 @@ class CornerTurnUTrack(Node):
             return 0.0
         w_mag = np.clip(abs(w_calc), self.w_min, self.w_max)
         return math.copysign(w_mag, w_calc)
+
+    def move_arm_to_xyz_direct3(self, x: float, y: float, z: float, speed_scale: float = 0.5) -> bool:
+        """Solves direct position IK without orientation fighting."""
+        ik_client = self.create_client(GetPositionIK, '/compute_ik')
+
+        if not ik_client.wait_for_service(timeout_sec=2.0):
+            self.get_logger().error("Service '/compute_ik' not available.")
+            return False
+
+        req = GetPositionIK.Request()
+        ik_req = PositionIKRequest()
+        ik_req.group_name = "arm"
+        ik_req.ik_link_name = "tcp_link"
+        ik_req.avoid_collisions = False
+        ik_req.timeout.sec = 1
+
+        # Set position target relative to link0
+        ik_req.pose_stamped.header.frame_id = "link0" 
+        ik_req.pose_stamped.pose.position.x = float(x)
+        ik_req.pose_stamped.pose.position.y = float(y)
+        ik_req.pose_stamped.pose.position.z = float(z)
+
+        # Default neutral orientation placeholder
+        ik_req.pose_stamped.pose.orientation.w = 1.0
+
+        req.ik_request = ik_req
+
+        self.get_logger().info(f"Solving direct IK for XYZ: [{x:.3f}, {y:.3f}, {z:.3f}]...")
+
+        future = ik_client.call_async(req)
+        event = threading.Event()
+        future.add_done_callback(lambda f: event.set())
+
+        if not event.wait(timeout=2.0):
+            self.get_logger().error("IK service call timed out.")
+            return False
+
+        response = future.result()
+
+        if response.error_code.val != 1:  # 1 = SUCCESS
+            self.get_logger().error(f"❌ Direct IK failed (error code: {response.error_code.val}). Check kinematics.yaml setup.")
+            return False
+
+        # Extract calculated joint positions
+        joint_names = response.solution.joint_state.name
+        joint_positions = response.solution.joint_state.position
+        target_joints = dict(zip(joint_names, joint_positions))
+
+        self.get_logger().info(f"✅ Found IK Solution! Joints: {target_joints}")
+        return self.send_joint_angles_to_movegroup("arm", target_joints, speed_scale)
+
+    def send_joint_angles_to_movegroup(self, group_name: str, joint_targets: dict, speed_scale: float = 0.5) -> bool:
+        """Sends a dict of explicit joint targets directly to MoveGroup."""
+        if not self._move_group_client.wait_for_server(timeout_sec=2.0):
+            return False
+
+        goal_msg = MoveGroup.Goal()
+        goal_msg.request.group_name = group_name
+        goal_msg.request.num_planning_attempts = 1
+        goal_msg.request.allowed_planning_time = 1.0
+        goal_msg.request.max_velocity_scaling_factor = speed_scale
+        goal_msg.request.max_acceleration_scaling_factor = speed_scale
+
+        constraints = Constraints()
+        for joint_name, target_val in joint_targets.items():
+            if joint_name in ["joint1", "joint2", "joint3", "joint4", "wrist_joint"]:
+                jc = JointConstraint()
+                jc.joint_name = joint_name
+                jc.position = target_val
+                jc.tolerance_above = 0.01
+                jc.tolerance_below = 0.01
+                jc.weight = 1.0
+                constraints.joint_constraints.append(jc)
+
+        goal_msg.request.goal_constraints.append(constraints)
+
+        # Action execution synchronization
+        event = threading.Event()
+        goal_handle = None
+
+        def goal_response_callback(future):
+            nonlocal goal_handle
+            goal_handle = future.result()
+            event.set()
+
+        send_goal_future = self._move_group_client.send_goal_async(goal_msg)
+        send_goal_future.add_done_callback(goal_response_callback)
+
+        if not event.wait(timeout=3.0) or not goal_handle.accepted:
+            return False
+
+        event.clear()
+        result_success = False
+
+        def get_result_callback(future):
+            nonlocal result_success
+            result = future.result()
+            result_success = (result.status == 4)
+            event.set()
+
+        result_future = goal_handle.get_result_async()
+        result_future.add_done_callback(get_result_callback)
+
+        if not event.wait(timeout=10.0):
+            return False
+
+        return result_success
+
 
     def send_joint_goal_to_movegroup(self, group_name: str, state_key: str, speed_scale: float = 0.7) -> bool:
         """Sends joint constraints to MoveGroup Action Server with controlled velocity."""
@@ -196,10 +323,6 @@ class CornerTurnUTrack(Node):
         goal_msg.request.num_planning_attempts = 5
         goal_msg.request.allowed_planning_time = 5.0
 
-        # =========================================================
-        # SLOW DOWN ARM MOTION HERE (0.01 to 1.0)
-        # =========================================================
-        # Sets velocity and acceleration to 10% of max allowed speed
         goal_msg.request.max_velocity_scaling_factor = speed_scale
         goal_msg.request.max_acceleration_scaling_factor = speed_scale
 
@@ -252,7 +375,7 @@ class CornerTurnUTrack(Node):
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(get_result_callback)
 
-        if not event.wait(timeout=25.0):  # Increased timeout since motion is slower
+        if not event.wait(timeout=25.0):
             self.get_logger().error(f"Timeout waiting for result of goal '{state_key}'.")
             return False
 
@@ -272,24 +395,67 @@ class CornerTurnUTrack(Node):
             self.get_logger().error("❌ PICK sequence failed at Step 1 (hand_open). Aborting.")
             self.manipulation_in_progress = False
             return
-        time.sleep(0.5)  # Let joints settle
+        time.sleep(0.5)
 
         # Step 2: Lower Arm to Pick Position
-        if not self.send_joint_goal_to_movegroup("arm", "arm_pick"):
-            self.get_logger().error("❌ PICK sequence failed at Step 2 (arm_pick). Aborting.")
+        if not self.send_joint_goal_to_movegroup("arm", "arm_pick_place"):
+            self.get_logger().error("❌ PICK sequence failed at Step 2 (arm_pick_place). Aborting.")
             self.manipulation_in_progress = False
             return
-        time.sleep(0.5)  # Let joints settle
+        time.sleep(0.5)
 
         # Step 3: Close Gripper on Object
         if not self.send_joint_goal_to_movegroup("hand", "hand_closed"):
             self.get_logger().error("❌ PICK sequence failed at Step 3 (hand_closed). Aborting.")
             self.manipulation_in_progress = False
             return
-        time.sleep(0.5)  # Let joints settle
+        time.sleep(0.5)
 
         # Step 4: Lift Arm to Ready Position
-        if not self.send_joint_goal_to_movegroup("arm", "arm_ready"):
+        if not self.send_joint_goal_to_movegroup("arm", "arm_left"):
+            self.get_logger().error("❌ PICK sequence failed at Step 4 (arm_ready). Aborting.")
+            self.manipulation_in_progress = False
+            return
+
+        self.get_logger().info(f"✅ PICK Sequence Completed for item: '{item_id}'.")
+        self.manipulation_in_progress = False
+        self.current_task_idx += 1
+
+    def execute_pick_object_sequence(self, item_id: str):
+        """Sequential execution for PICKing an object."""
+        while self.obj18_pos is None:
+            self.get_logger().info(f"obj18 not found")
+            time.sleep(1.0)
+
+        self.get_logger().info("Settling down ...")
+
+        time.sleep(5.0)
+
+        self.get_logger().info(f"🦾 Starting PICK Sequence for item: '{item_id}'...")
+        
+        # Step 1: Open Gripper
+        if not self.send_joint_goal_to_movegroup("hand", "hand_open"):
+            self.get_logger().error("❌ PICK sequence failed at Step 1 (hand_open). Aborting.")
+            self.manipulation_in_progress = False
+            return
+        time.sleep(0.5)
+
+        # Step 2: Lower Arm to Pick Position [-0.000, 0.186, 0.034]
+        if not self.move_arm_to_xyz_direct3(self.obj18_pos[0]+0.01, self.obj18_pos[1],-0.04):
+            self.get_logger().error("❌ PICK sequence failed at Step 2 (arm_pick_place). Aborting.")
+            self.manipulation_in_progress = False
+            return
+        time.sleep(0.5)
+
+        # Step 3: Close Gripper on Object
+        if not self.send_joint_goal_to_movegroup("hand", "hand_closed"):
+            self.get_logger().error("❌ PICK sequence failed at Step 3 (hand_closed). Aborting.")
+            self.manipulation_in_progress = False
+            return
+        time.sleep(0.5)
+
+        # Step 4: Lift Arm to Ready Position
+        if not self.send_joint_goal_to_movegroup("arm", "arm_left"):
             self.get_logger().error("❌ PICK sequence failed at Step 4 (arm_ready). Aborting.")
             self.manipulation_in_progress = False
             return
@@ -304,8 +470,8 @@ class CornerTurnUTrack(Node):
         self.get_logger().info(f"🦾 Starting PLACE Sequence for item: '{item_id}'...")
         
         # Step 1: Lower Arm to Place Position
-        if not self.send_joint_goal_to_movegroup("arm", "arm_pick"):
-            self.get_logger().error("❌ PLACE sequence failed at Step 1 (arm_pick). Aborting.")
+        if not self.send_joint_goal_to_movegroup("arm", "arm_pick_place"):
+            self.get_logger().error("❌ PLACE sequence failed at Step 1 (arm_pick_place). Aborting.")
             self.manipulation_in_progress = False
             return
         time.sleep(0.5)
@@ -390,6 +556,16 @@ class CornerTurnUTrack(Node):
                 self.manipulation_in_progress = True
                 threading.Thread(
                     target=self.execute_pick_sequence,
+                    args=(current_task.item_id,),
+                    daemon=True
+                ).start()
+
+        elif current_task.type == TaskType.PICK_OBJECT:
+            self.stop_robot()
+            if not self.manipulation_in_progress:
+                self.manipulation_in_progress = True
+                threading.Thread(
+                    target=self.execute_pick_object_sequence,
                     args=(current_task.item_id,),
                     daemon=True
                 ).start()

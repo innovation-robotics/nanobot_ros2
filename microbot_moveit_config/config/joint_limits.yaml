@@ -33,21 +33,21 @@ joint_limits:
   # Gripper Joints
   Tip_Gripper_Idol_Joint:
     has_velocity_limits: true
-    max_velocity: 0.3
+    max_velocity: 0.8
     has_acceleration_limits: true
-    max_acceleration: 0.3
+    max_acceleration: 0.8
   Tip_Gripper_Servo_Joint:
     has_velocity_limits: true
-    max_velocity: 0.3
+    max_velocity: 0.8
     has_acceleration_limits: true
-    max_acceleration: 0.3
+    max_acceleration: 0.8
   robot_finger_joint1:
     has_velocity_limits: true
-    max_velocity: 0.3
+    max_velocity: 0.8
     has_acceleration_limits: true
-    max_acceleration: 0.3
+    max_acceleration: 0.8
   robot_finger_joint2:
     has_velocity_limits: true
-    max_velocity: 0.3
+    max_velocity: 0.8
     has_acceleration_limits: true
-    max_acceleration: 0.3
+    max_acceleration: 0.8

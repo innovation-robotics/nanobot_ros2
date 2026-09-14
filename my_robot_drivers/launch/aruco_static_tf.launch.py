@@ -102,42 +102,21 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='static_tf_marker_1',
         arguments=[
-            '1.22', '0.0', '0.1275',
+            '2.13', '0.0', '0.1275',
             str(45.0*deg_to_rad), str(180.0 * deg_to_rad), str(-90.0 * deg_to_rad),       # Yaw, Pitch, Roll (rad)
             'map', 'marker_1'
         ]
     )
+
 
     tf_marker_2 = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_marker_2',
         arguments=[
-            '2.13', '0.0', '0.1275',
-            str(45.0*deg_to_rad), str(180.0 * deg_to_rad), str(-90.0 * deg_to_rad),       # Yaw, Pitch, Roll (rad)
-            'map', 'marker_2'
-        ]
-    )
-
-    tf_marker_3 = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_marker_3',
-        arguments=[
-            '2.43', '0.605', '0.1275',
-            str(-90.0*deg_to_rad), '0.0', str(90.0 * deg_to_rad),       # Yaw, Pitch, Roll (rad)
-            'map', 'marker_3'
-        ]
-    )
-
-    tf_marker_4 = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_marker_4',
-        arguments=[
-            '2.13', '1.21', '0.1275',
+            '2.13', '1.51', '0.1275',
             '0.0', '0.0', str(90.0 * deg_to_rad),       # Yaw, Pitch, Roll (rad)
-            'map', 'marker_4'
+            'map', 'marker_2'
         ]
     )
 
@@ -145,21 +124,4 @@ def generate_launch_description():
         tf_marker_0,
         tf_marker_1,
         tf_marker_2,
-        tf_marker_3,
-        tf_marker_4,
     ])
-
-    # tf_marker_0 = Node(
-    #     package='tf2_ros',
-    #     executable='static_transform_publisher',
-    #     name='static_tf_marker_0',
-    #     arguments=[
-    #         '0.2', '0.0', '0.1275',
-    #         str(-90.0*deg_to_rad), '0.0', str(90.0 * deg_to_rad),       # Yaw, Pitch, Roll (rad)
-    #         'map', 'marker_0'
-    #     ]
-    # )
-
-    # return LaunchDescription([
-    #     tf_marker_0,
-    # ])

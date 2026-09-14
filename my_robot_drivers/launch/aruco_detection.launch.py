@@ -49,7 +49,7 @@ def generate_launch_description():
         name='aruco_marker_publisher',
         output='screen',
         parameters=[{
-            'marker_size': 0.08,
+            'marker_size': 0.18,
             'dictionary_id': 'DICT_4X4_250',
             'camera_frame': 'camera_optical_frame',
             'reference_frame': 'map',

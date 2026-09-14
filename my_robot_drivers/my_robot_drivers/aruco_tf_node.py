@@ -14,12 +14,14 @@ class ArucoLocalizationPublisher(Node):
     def __init__(self):
         super().__init__('aruco_localization_publisher')
 
-        self.declare_parameter('marker_size', 0.08)
+        self.declare_parameter('marker_size', 0.18)
+        self.declare_parameter('object_marker_size', 0.03)
         self.declare_parameter('dictionary_id', 'DICT_4X4_250')
         self.declare_parameter('camera_frame', 'camera_optical_frame')
         self.declare_parameter('map_frame', 'map')
 
         self.marker_size = self.get_parameter('marker_size').value
+        self.object_marker_size = self.get_parameter('object_marker_size').value
         self.camera_frame = self.get_parameter('camera_frame').value
         self.map_frame = self.get_parameter('map_frame').value
         self.dict_name = self.get_parameter('dictionary_id').value
@@ -32,10 +34,8 @@ class ArucoLocalizationPublisher(Node):
         # }
         self.marker_map_poses = {
             0: {'pos': np.array([0.0, 0.0, 0.1275]), 'rot': np.array([-45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
-            1: {'pos': np.array([1.22, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
-            2: {'pos': np.array([2.13, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},           
-            3: {'pos': np.array([2.43, 0.605, 0.1275]), 'rot': np.array([-90.0*deg_to_rad, 0.0, 90.0 * deg_to_rad])},         
-            4: {'pos': np.array([2.13, 1.21, 0.1275]), 'rot': np.array([0.0, 0.0, 90.0 * deg_to_rad])}            
+            1: {'pos': np.array([2.13, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},           
+            2: {'pos': np.array([2.13, 1.51, 0.1275]), 'rot': np.array([0.0, 0.0, 90.0 * deg_to_rad])}            
         }
 
         # Initialize ArUco Detector
@@ -65,6 +65,7 @@ class ArucoLocalizationPublisher(Node):
         
         # Publish Pose to be consumed by robot_localization EKF
         self.pose_pub = self.create_publisher(PoseWithCovarianceStamped, '/aruco/pose', 10)
+        self.object20_pose_pub = self.create_publisher(PoseWithCovarianceStamped, '/aruco/pose18', 10)
         self.pub_result = self.create_publisher(Image, '/aruco/result', 10)
 
         self.get_logger().info("ArUco EKF Pose Publisher Node Started.")
@@ -109,9 +110,68 @@ class ArucoLocalizationPublisher(Node):
                     if success:
                         cv2.drawFrameAxes(cv_image, self.camera_matrix, self.dist_coeffs, rvec, tvec, 0.05)
                         self.publish_aruco_pose(rvec, tvec, marker_id, msg.header.stamp)
+                elif marker_id == 18:
+                    self.publish_object18_pose(corners[i][0], msg.header.stamp)
 
         self.pub_result.publish(self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8'))
 
+    def publish_object18_pose(self, corners, timestamp):
+        half_s = self.object_marker_size / 2.0
+        img_points = corners.astype(np.float32)
+        obj_points = np.array([
+            [-half_s,  half_s, 0],
+            [ half_s,  half_s, 0],
+            [ half_s, -half_s, 0],
+            [-half_s, -half_s, 0]
+        ], dtype=np.float32)
+        success, rvec, tvec = cv2.solvePnP(obj_points, img_points, self.camera_matrix, self.dist_coeffs)
+        # 5. Build and publish PoseWithCovarianceStamped
+        R_cam_marker, _ = cv2.Rodrigues(rvec)
+        T_cam_marker = tvec.reshape((3, 1))
+
+        # 2. Position of Camera Optical Frame relative to Marker
+        R_marker_cam = R_cam_marker.T
+        T_marker_cam = -np.dot(R_marker_cam, T_cam_marker)
+
+        # 3. Apply the URDF joint rotation (rpy="-1.570796327 0 -1.570796327")
+        # Rotates vectors from camera_optical_frame back to base_link alignment
+        R_base_camera = R.from_euler('xyz', [-np.pi/2, 0.0, -np.pi/2]).as_matrix()  # from the urdf rpy
+        T_base_camera = np.array([[0.013], [0.0], [0.072]]) # 6cm forward on chassis
+
+        R_cam_base = R_base_camera.T
+        T_cam_base = -np.dot(R_cam_base, T_base_camera)
+
+        R_base_link0 = R.from_euler('xyz', [0.0, 0.0, -np.pi/2]).as_matrix()  # from the urdf rpy
+        T_base_link0 = np.array([[-0.037], [0.0], [0.0965]]) # 6cm forward on chassis
+
+        R_marker_link0 = np.dot(R_marker_cam, np.dot(R_cam_base, R_base_link0))
+        T_marker_link0 = np.dot(R_marker_cam, np.dot(R_cam_base,T_base_link0)) + np.dot(R_marker_cam, T_cam_base) + T_marker_cam
+
+        R_link0_marker = R_marker_link0.T
+        T_link0_marker = -np.dot(R_link0_marker, T_marker_link0)
+
+        pose_msg = PoseWithCovarianceStamped()
+        pose_msg.header.stamp = timestamp
+        pose_msg.header.frame_id = self.map_frame
+
+        pose_msg.pose.pose.position.x = float(T_link0_marker[0][0])
+        pose_msg.pose.pose.position.y = float(T_link0_marker[1][0])
+        pose_msg.pose.pose.position.z = float(T_link0_marker[2][0])
+
+        quat = R.from_matrix(R_link0_marker).as_quat()
+        pose_msg.pose.pose.orientation.x = quat[0]
+        pose_msg.pose.pose.orientation.y = quat[1]
+        pose_msg.pose.pose.orientation.z = quat[2]
+        pose_msg.pose.pose.orientation.w = quat[3]
+
+        cov = np.zeros((6, 6), dtype=np.float64)
+        np.fill_diagonal(cov, [0.02, 0.02, 0.02, 0.05, 0.05, 0.05])
+        pose_msg.pose.covariance = cov.flatten().tolist()
+
+        self.object20_pose_pub.publish(pose_msg)
+
+        return
+    
     def publish_aruco_pose(self, rvec, tvec, marker_id, timestamp):
         # 4. Transform into Map frame using known Marker position in Map
         marker_map = self.marker_map_poses[marker_id]
@@ -132,7 +192,7 @@ class ArucoLocalizationPublisher(Node):
         # 3. Apply the URDF joint rotation (rpy="-1.570796327 0 -1.570796327")
         # Rotates vectors from camera_optical_frame back to base_link alignment
         R_base_camera = R.from_euler('xyz', [-np.pi/2, 0.0, -np.pi/2]).as_matrix()  # from the urdf rpy
-        T_base_camera = np.array([[0.06], [0.0], [0.1275]]) # 6cm forward on chassis
+        T_base_camera = np.array([[0.013], [0.0], [0.072]]) # 6cm forward on chassis
 
         R_camera_base = R_base_camera.T
         T_camera_base = -np.dot(R_camera_base, T_base_camera)
