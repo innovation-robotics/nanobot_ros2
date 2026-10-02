@@ -1,9 +1,9 @@
 moveit_setup_assistant_config:
   urdf:
     package: my_robot_description
-    relative_path: urdf/mobile_microbot.xacro
+    relative_path: urdf/mobile_nanobot.xacro
   srdf:
-    relative_path: config/mobile_microbot.srdf
+    relative_path: config/mobile_nanobot.srdf
   package_settings:
     author_name: Ahmed Waly
     author_email: robotsrepublic2000@gmail.com

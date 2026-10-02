@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<robot name="microbot" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot name="nanobot" xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
   <!-- <link name="world"/>
 
-  <joint name="world_to_microbot_base" type="fixed">
+  <joint name="world_to_nanobot_base" type="fixed">
     <parent link="world"/>
     <child link="link0"/>
     <origin xyz="0.0 0.0 0" rpy="0 0 1.570796327"/>
@@ -91,13 +91,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link0.stl" />
+        <mesh filename="package://my_robot_description/meshes/link0.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link0.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link0.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
@@ -105,7 +105,7 @@
   <joint name="joint1" type="revolute">
     <parent link="link0"/>
     <child link="link1"/>
-    <origin xyz="0 0 0.012" rpy="0 0 0"/>
+    <origin xyz="0 0 0.0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-1.570796327" upper="1.570796327" effort="100" velocity="100"/>
   </joint>
@@ -121,13 +121,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link1.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link1.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
@@ -135,7 +135,7 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 -0.040505 0.126375" rpy="0 0 0"/>
+    <origin xyz="0 0.0405055 0.133875" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
     <limit lower="-2.617993878" upper="0.523598776" effort="100" velocity="100"/>
   </joint>
@@ -151,13 +151,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link2.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link2.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
@@ -165,7 +165,7 @@
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="0 0.0 0.116" rpy="0.0 0 0"/>
+    <origin xyz="0 0.0 0.165188" rpy="0.0 0 0"/>
     <axis xyz="1 0 0"/>
     <limit lower="-2.617993878" upper="0.523598776" effort="100" velocity="100"/>
   </joint>
@@ -181,27 +181,25 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link3.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link3.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link3.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link3.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
   </link>
 
-  <joint name="joint4" type="revolute">
+  <joint name="joint4" type="fixed">
     <parent link="link3"/>
     <child link="link4"/>
-    <origin xyz="0 0.0 0.135" rpy="0.0 0 0"/>
-    <axis xyz="1 0 0"/>
-    <limit lower="-2.617993878" upper="0.523598776" effort="100" velocity="100"/>
+    <origin xyz="0 0.0 0.117188" rpy="0.0 0 0"/>
   </joint>
 
   <link name="link4">
-    <inertial>
+    <!-- <inertial>
       <origin xyz="0.000259233 -3.3552e-06 0.0116129" rpy="0 0 0"/>
       <mass value="0.798614"/>
       <inertia ixx="0.00120156" ixy="0" ixz="0"
@@ -211,27 +209,33 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link4.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link4.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://my_robot_description/meshes/link4.stl"/>
+        <mesh filename="package://my_robot_description/meshes/link4.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
   </link>
 
-  <joint name="wrist_joint" type="revolute">
+  <!-- <joint name="wrist_joint" type="revolute">
     <parent link="link4"/>
     <child link="wrist"/>
     <origin xyz="0.0 0.0 0.104" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-1.570796327" upper="1.570796327" effort="100" velocity="100"/>
+  </joint> -->
+
+  <joint name="wrist_joint" type="fixed">
+    <parent link="link4"/>
+    <child link="wrist"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/> 
   </joint>
 
   <link name="wrist">
-    <inertial>
+    <!-- <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.05"/>
       <inertia ixx="0.00120156" ixy="0" ixz="0"
@@ -252,7 +256,7 @@
       <geometry>
         <box size="0.0335 0.013 0.013"/>
       </geometry>
-    </collision>
+    </collision> -->
   </link>
 
   <!-- Virtual link representing the grasping point -->
@@ -277,7 +281,7 @@
   
   <link name="robot_link7" />
   <joint name="robot_joint7" type="fixed">
-      <origin rpy="0 0 0" xyz="0 0 0.0065" />
+      <origin rpy="0 0 0" xyz="0 0 0.0" />
       <parent link="wrist" />
       <child link="robot_link7" />
       <axis xyz="0 0 0" />

@@ -11,7 +11,7 @@ def generate_launch_description():
     # 1. Locate package paths
     pkg_share = get_package_share_directory('my_robot_description')
     # default_xacro_path = os.path.join(pkg_share, 'urdf', 'robot.urdf.xacro')
-    default_xacro_path = os.path.join(pkg_share, 'urdf', 'mobile_microbot.xacro')
+    default_xacro_path = os.path.join(pkg_share, 'urdf', 'mobile_nanobot.xacro')
     default_rviz_config_path = os.path.join(pkg_share, 'rviz', 'display.rviz')
 
     # 2. Declare launch arguments (allows overriding parameters from CLI)

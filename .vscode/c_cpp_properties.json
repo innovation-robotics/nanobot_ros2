@@ -6,11 +6,11 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/micro_ros_agent/include/**",
-        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/install/micro_ros_msgs/include/**",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_nanobot/install/micro_ros_agent/include/**",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_nanobot/install/micro_ros_msgs/include/**",
         "/opt/ros/humble/include/**",
-        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/src/micro-ROS-Agent/micro_ros_agent/include/**",
-        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_microbot/src/my_robot_description/include/**",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_nanobot/src/micro-ROS-Agent/micro_ros_agent/include/**",
+        "/home/ahmed/docker/mobile_microbot_ws/mobile_microbot_docker_ws/mobile_nanobot/src/my_robot_description/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",

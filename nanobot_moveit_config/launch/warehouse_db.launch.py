@@ -3,5 +3,5 @@ from moveit_configs_utils.launches import generate_warehouse_db_launch
 
 
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder("mobile_microbot", package_name="microbot_moveit_config").to_moveit_configs()
+    moveit_config = MoveItConfigsBuilder("mobile_nanobot", package_name="nanobot_moveit_config").to_moveit_configs()
     return generate_warehouse_db_launch(moveit_config)

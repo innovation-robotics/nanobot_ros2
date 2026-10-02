@@ -142,7 +142,7 @@ class ArucoLocalizationPublisher(Node):
         T_cam_base = -np.dot(R_cam_base, T_base_camera)
 
         R_base_link0 = R.from_euler('xyz', [0.0, 0.0, -np.pi/2]).as_matrix()  # from the urdf rpy
-        T_base_link0 = np.array([[-0.037], [0.0], [0.0965]]) # 6cm forward on chassis
+        T_base_link0 = np.array([[0.032], [0.0], [0.1085]]) # 6cm forward on chassis
 
         R_marker_link0 = np.dot(R_marker_cam, np.dot(R_cam_base, R_base_link0))
         T_marker_link0 = np.dot(R_marker_cam, np.dot(R_cam_base,T_base_link0)) + np.dot(R_marker_cam, T_cam_base) + T_marker_cam

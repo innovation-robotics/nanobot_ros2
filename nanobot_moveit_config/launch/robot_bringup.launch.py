@@ -36,7 +36,7 @@ def generate_launch_description():
     )
 
     # 1. MoveIt Configurations
-    moveit_config = MoveItConfigsBuilder("mobile_microbot", package_name="microbot_moveit_config").to_moveit_configs()
+    moveit_config = MoveItConfigsBuilder("mobile_nanobot", package_name="nanobot_moveit_config").to_moveit_configs()
 
     # 2. Odometry Broker Node
     # Note: Set 'publish_tf': False if ekf_node is publishing the odom -> base_footprint frame
@@ -104,7 +104,7 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         parameters=[moveit_config.to_dict()],
-        arguments=['-d', os.path.join(get_package_share_directory("microbot_moveit_config"), "config", "moveit.rviz")]
+        arguments=['-d', os.path.join(get_package_share_directory("nanobot_moveit_config"), "config", "moveit.rviz")]
     )
 
     # 9. Include ArUco Detection & Room Map TFs

@@ -68,9 +68,9 @@ class CornerTurnUTrack(Node):
         # Pre-defined SRDF Joint Goals Mapping
         self.srdf_states = {
             # ARM Group Joint Targets
-            "arm_ready": {"joint1": 0.0, "joint2": 0.0, "joint3": 0.0, "joint4": 0.0, "wrist_joint": 0.0},
-            "arm_pick_place":  {"joint1": 0.0, "joint2": -1.0935, "joint3": -0.8852, "joint4": -1.1629, "wrist_joint": 0.0},
-            "arm_left":  {"joint1": 0.0, "joint2": 0.0, "joint3": 0.34906585, "joint4": -0.34906585, "wrist_joint": 0.0},
+            "arm_ready": {"joint1": 0.0, "joint2": 0.0, "joint3": 0.0},
+            "arm_pick_place":  {"joint1": 0.0, "joint2": -1.466076572, "joint3": -1.850049007},
+            "arm_left":  {"joint1": 0.0, "joint2": 0.0, "joint3": 0.0},
             # "arm_left":  {"joint1": 0.0, "joint2": 0.0, "joint3": -1.570796327, "joint4": -1.570796327, "wrist_joint": 0.0},
             
             # HAND Group Joint Targets
@@ -81,10 +81,10 @@ class CornerTurnUTrack(Node):
                 "robot_finger_joint2": 1.2
             },
             "hand_closed": {
-                "Tip_Gripper_Idol_Joint": -0.5235,
-                "Tip_Gripper_Servo_Joint": 0.523597,
-                "robot_finger_joint1": -0.523597,
-                "robot_finger_joint2": 0.523597
+                "Tip_Gripper_Idol_Joint": -0.261799388,
+                "Tip_Gripper_Servo_Joint": 0.261799388,
+                "robot_finger_joint1": -0.261799388,
+                "robot_finger_joint2": 0.261799388
             },
             "hand_fully_closed": {
                 "Tip_Gripper_Idol_Joint": 0.0,
@@ -441,7 +441,7 @@ class CornerTurnUTrack(Node):
         time.sleep(0.5)
 
         # Step 2: Lower Arm to Pick Position [-0.000, 0.186, 0.034]
-        if not self.move_arm_to_xyz_direct3(self.obj18_pos[0]+0.01, self.obj18_pos[1],-0.04):
+        if not self.move_arm_to_xyz_direct3(self.obj18_pos[0]+0.02, self.obj18_pos[1]-0.03,-0.04):
             self.get_logger().error("❌ PICK sequence failed at Step 2 (arm_pick_place). Aborting.")
             self.manipulation_in_progress = False
             return
