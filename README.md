@@ -7,13 +7,13 @@
 ## 📸 Overview & Hardware Architecture
 
 <p align="center">
-  <img src="nanobot1.jpg" alt="Nanobot ROS2 Concept and Wiring Diagram" width="85%"/>
+  <img src="nanobot1.png" alt="Nanobot ROS2 Concept and Wiring Diagram" width="85%"/>
 </p>
 
 Nanobot unifies modern robotic stacks—allowing a host PC running ROS2 to communicate wirelessly via Wi-Fi with an ESP32 microcontroller to execute closed-loop base navigation and precise joint-angle arm control.
 
 <p align="center">
-  <img src="813646004_122134663958778548_7503997665456761121_n.png" alt="Nanobot Manipulator Arm Close-up" width="50%"/>
+  <img src="813646004_122134663958778548_7503997665456761121_n.jpg" alt="Nanobot Manipulator Arm Close-up" width="50%"/>
 </p>
 
 ---
