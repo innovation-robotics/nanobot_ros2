@@ -55,4 +55,3 @@ Watch Nanobot in action:
 ├── ros2_ws/              # ROS2 packages (bringup, description, moveit config)
 └── docs/                 # Wiring diagrams, schematics, and user guides
 
-Tel: +201143446893
