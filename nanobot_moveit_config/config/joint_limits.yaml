@@ -1,24 +1,24 @@
 # joint_limits.yaml
 
-default_velocity_scaling_factor: 0.05       # Default to 5% speed
-default_acceleration_scaling_factor: 0.05   # Default to 5% acceleration
+default_velocity_scaling_factor: 0.6        # Sweet-spot speed factor
+default_acceleration_scaling_factor: 0.5    # Smooth acceleration ramp
 
 joint_limits:
   joint1:
     has_velocity_limits: true
-    max_velocity: 0.5                     # Slow down max speed (~28 deg/s)
-    has_acceleration_limits: true         # Enable acceleration limiting
-    max_acceleration: 0.5                 # Smooth ramping up/down
+    max_velocity: 0.5
+    has_acceleration_limits: true
+    max_acceleration: 0.5
   joint2:
     has_velocity_limits: true
     max_velocity: 0.5
     has_acceleration_limits: true
-    max_acceleration: 0.5
+    max_acceleration: 0.4
   joint3:
     has_velocity_limits: true
     max_velocity: 0.5
     has_acceleration_limits: true
-    max_acceleration: 0.5
+    max_acceleration: 0.4
   joint4:
     has_velocity_limits: true
     max_velocity: 0.5

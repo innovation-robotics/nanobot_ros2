@@ -34,6 +34,9 @@ setup(
             'aruco_tf_node = my_robot_drivers.aruco_tf_node:main',
             'u_track_pure_pursuit = my_robot_drivers.u_track_pure_pursuit:main',
             'u_track_corner_turn = my_robot_drivers.u_track_corner_turn:main',
+            'pick_object_tester = my_robot_drivers.pick_object_tester:main',
+            'arm_trajectory_bridge_tcp = my_robot_drivers.arm_trajectory_bridge_tcp:main',
+            'odom_broker_tcp = my_robot_drivers.odom_broker_tcp:main',
         ],
     },
 )

@@ -30,19 +30,6 @@ def generate_launch_description():
         )
     )
 
-    # # 3. ArUco Marker Detector Node
-    # aruco_node = Node(
-    #     package='aruco_ros',
-    #     executable='marker_publisher',
-    #     name='aruco_marker_publisher',
-    #     output='screen',
-    #     parameters=[params_file],
-    #     remappings=[
-    #         ('image', '/camera/image_raw'),
-    #         ('camera_info', '/camera/camera_info')
-    #     ]
-    # )
-
     aruco_detector_node = Node(
         package='my_robot_drivers',         # Make sure this matches your package name
         executable='aruco_tf_node',      # Executable script name
@@ -53,6 +40,7 @@ def generate_launch_description():
             'dictionary_id': 'DICT_4X4_250',
             'camera_frame': 'camera_optical_frame',
             'reference_frame': 'map',
+            'low_light_enhance': True,
         }],
         remappings=[
             ('/camera/image_raw', '/camera/image_raw'),
