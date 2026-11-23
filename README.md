@@ -34,6 +34,7 @@ Watch Nanobot in action:
 * **[Nanobot Overview & Demonstration 1](https://youtu.be/QfQ76SFpOAc)**
 * **[Nanobot Mobile Base Assembly, Programming, and Testing](https://youtu.be/g3tPRG9t1u4)**
 * **[Nanobot Arm Assembly, Programming, and Testing](https://youtu.be/v5-3b4HivTY)**
+* **[Nanobot Mobile Base Testing, Basic Functionalities](https://youtu.be/MPw8-pmFTJ8)**
 
 ---
 
