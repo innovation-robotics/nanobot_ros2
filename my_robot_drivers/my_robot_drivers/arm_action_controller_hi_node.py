@@ -8,6 +8,7 @@ import rclpy
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32
 from robot_interfaces.action import MoveArmToPoint, MoveArmToPose
 
@@ -25,6 +26,8 @@ class ArmController(Node):
         self.declare_parameter('arm_port', 8890)
         self.declare_parameter('gripper_port', 8891)
         self.declare_parameter('gripper_topic', '/arm_controller/gripper_angle')
+        self.declare_parameter('arm_joint_states_topic', '/arm_joint_states')
+        self.declare_parameter('joint_state_rate_hz', 30.0)
         self.declare_parameter('interpolation_steps', 20)
         self.declare_parameter('step_delay_sec', 0.05)
 
@@ -32,6 +35,8 @@ class ArmController(Node):
         self.arm_port = int(self.get_parameter('arm_port').value)
         self.gripper_port = int(self.get_parameter('gripper_port').value)
         gripper_topic = str(self.get_parameter('gripper_topic').value)
+        arm_joint_states_topic = str(self.get_parameter('arm_joint_states_topic').value)
+        joint_state_rate_hz = float(self.get_parameter('joint_state_rate_hz').value)
         self.interp_steps = int(self.get_parameter('interpolation_steps').value)
         self.step_delay = float(self.get_parameter('step_delay_sec').value)
 
@@ -62,6 +67,11 @@ class ArmController(Node):
         self.e_stopped = False
         self._lock = threading.Lock()
 
+        # Arm joint states publisher for RViz / joint_state_publisher
+        self.arm_joint_pub = self.create_publisher(JointState, arm_joint_states_topic, 10)
+        if joint_state_rate_hz > 0.0:
+            self.joint_state_timer = self.create_timer(1.0 / joint_state_rate_hz, self.publish_arm_joint_state)
+
         # Gripper topic subscriber
         self.gripper_sub = self.create_subscription(
             Float32,
@@ -88,10 +98,23 @@ class ArmController(Node):
             execute_callback=self.execute_move_to_pose_callback,
         )
 
+        self.publish_arm_joint_state()
+
         self.get_logger().info(
             f"ArmController ready on /arm_controller/move_to_point, /arm_controller/move_to_pose, "
-            f"and topic {gripper_topic} (ESP32={self.esp32_ip}, arm:{self.arm_port}, gripper:{self.gripper_port})"
+            f"topic {gripper_topic}, and joint states {arm_joint_states_topic} "
+            f"(ESP32={self.esp32_ip}, arm:{self.arm_port}, gripper:{self.gripper_port})"
         )
+
+    def publish_arm_joint_state(self):
+        with self._lock:
+            positions = list(self.current_joints)
+
+        msg = JointState()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.name = list(ARM_JOINT_ORDER)
+        msg.position = positions
+        self.arm_joint_pub.publish(msg)
 
     # =========================================================================
     # INVERSE KINEMATICS & POSE RESOLUTION
@@ -112,7 +135,7 @@ class ArmController(Node):
         h = math.sqrt(m**2 + n**2)
 
         max_reach = L1 + L2 + tol
-        min_reach = 0.1 #max(1e-9, abs(L1 - L2) - tol)
+        min_reach = 0.1  # max(1e-9, abs(L1 - L2) - tol)
 
         if h > max_reach or h < min_reach:
             return None
@@ -238,6 +261,7 @@ class ArmController(Node):
 
             with self._lock:
                 self.current_joints = list(wp)
+            self.publish_arm_joint_state()
 
             feedback = feedback_cls()
             feedback.progress = float(idx) / float(total_steps)
