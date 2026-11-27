@@ -37,6 +37,11 @@ setup(
             'pick_object_tester = my_robot_drivers.pick_object_tester:main',
             'arm_trajectory_bridge_tcp = my_robot_drivers.arm_trajectory_bridge_tcp:main',
             'odom_broker_tcp = my_robot_drivers.odom_broker_tcp:main',
+            'simple_node = my_robot_drivers.simple_node:main',
+            'maestro_action_node = my_robot_drivers.maestro_action_node:main',
+            'arm_action_controller_hi_node = my_robot_drivers.arm_action_controller_hi_node:main',
+            'mobile_base_action_controller_node = my_robot_drivers.mobile_base_action_controller_node:main',
+            'mobile_base_hardware_interface_node = my_robot_drivers.mobile_base_hardware_interface_node:main',
         ],
     },
 )

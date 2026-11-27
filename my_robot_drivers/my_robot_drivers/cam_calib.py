@@ -8,10 +8,10 @@ STREAM_URL = "http://192.168.1.5:81/stream"
 
 # 2. Count internal grid intersections on your checkerboard!
 # (e.g., an 8x6 square board usually has 7x5 internal corners)
-CHECKERBOARD = (7, 5)  
+CHECKERBOARD = (7, 3)  
 
 # 3. Real physical square size in meters (e.g., 0.025 = 2.5 cm)
-SQUARE_SIZE = 0.027  
+SQUARE_SIZE = 0.042  
 # =================================================
 
 # Termination criteria for sub-pixel accuracy

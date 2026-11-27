@@ -1,0 +1,14 @@
+# Goal
+string pose_name
+string[] joint_names
+float64[] joint_positions
+float32 duration_sec
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float32 progress
+int32 current_step
+int32 total_steps

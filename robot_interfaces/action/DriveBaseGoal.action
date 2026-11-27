@@ -1,0 +1,20 @@
+# Goal
+uint8 MODE_ROTATE_IN_PLACE = 0
+uint8 MODE_GO_TO = 1
+
+uint8 mode
+float32 angle_rad
+float32 x
+float32 y
+float32 max_speed
+---
+# Result
+bool success
+string message
+float32 final_x
+float32 final_y
+float32 final_yaw
+---
+# Feedback
+float32 distance_remaining
+float32 angle_remaining

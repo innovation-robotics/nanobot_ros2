@@ -16,7 +16,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from std_msgs.msg import Float32
-from robot_interfaces.action import DriveBaseGoal, MoveArmToPoint
+from robot_interfaces.action import DriveBaseGoal, MoveArmToPoint, MoveArmToPose
 
 
 class TaskType(Enum):
@@ -39,11 +39,6 @@ class MaestroNode(Node):
     def __init__(self):
         super().__init__('maestro')
 
-        self.joint_presets = {
-            "arm_ready": [0.0, 0.0, 0.0],
-            "arm_pick_place": [0.0, -1.466076572, -1.850049007],
-            "arm_left": [0.0, 0.0, 0.0],
-        }
         self.gripper_presets = {
             "hand_open": -1.2,
             "hand_closed": -0.261799388,
@@ -86,6 +81,7 @@ class MaestroNode(Node):
         # Action clients
         self._base_action_client = ActionClient(self, DriveBaseGoal, '/mobile_base_controller/drive_base')
         self._arm_action_client = ActionClient(self, MoveArmToPoint, '/arm_controller/move_to_point')
+        self._arm_pose_action_client = ActionClient(self, MoveArmToPose, '/arm_controller/move_to_pose')
 
         self.timer = self.create_timer(0.1, self.maestro_tick)
         self.key_thread = threading.Thread(target=self.keyboard_listener, daemon=True)
@@ -193,10 +189,26 @@ class MaestroNode(Node):
             return False, err
         return bool(res.success), str(res.message)
 
+    def send_move_to_pose(self, pose_name: str, duration_sec: float = 1.5) -> Tuple[bool, str]:
+        goal = MoveArmToPose.Goal()
+        goal.pose_name = str(pose_name)
+        goal.duration_sec = float(duration_sec)
+
+        ok, err, res = self._send_action_and_wait(
+            self._arm_pose_action_client,
+            goal,
+            '_active_arm_goal_handle',
+            result_timeout_sec=25.0,
+        )
+        if not ok or res is None:
+            return False, err
+        return bool(res.success), str(res.message)
+
     def send_gripper(self, angle: float) -> Tuple[bool, str]:
         msg = Float32()
         msg.data = float(angle)
         self.gripper_pub.publish(msg)
+        time.sleep(2.0)  # Allow time for gripper to move
         return True, f"Published gripper angle {angle:.4f} rad."
 
     def cancel_and_stop_active_goals(self) -> None:
@@ -257,6 +269,12 @@ class MaestroNode(Node):
                 self.get_logger().error(f"PICK failed at step {idx}: {msg}")
                 return False
             time.sleep(0.5)
+
+        ok, msg = self.send_move_to_pose("arm_ready", duration_sec=1.5)
+        if not ok:
+            self.get_logger().error(f"PICK failed returning to 'arm_ready': {msg}")
+            return False
+
         self.get_logger().info(f"✅ PICK completed for '{item_id}'.")
         return True
 
@@ -271,9 +289,9 @@ class MaestroNode(Node):
         self.get_logger().info("Settling down before object pick...")
         time.sleep(5.0)
 
-        target_x = float(self.obj18_pos[0] + 0.02)
-        target_y = float(self.obj18_pos[1] - 0.03)
-        target_z = -0.04
+        target_x = float(self.obj18_pos[0])
+        target_y = float(self.obj18_pos[1])
+        target_z = float(self.obj18_pos[2])
 
         ok, msg = self.send_gripper(self.gripper_presets["hand_open"])
         if not ok:
@@ -290,6 +308,12 @@ class MaestroNode(Node):
         ok, msg = self.send_gripper(self.gripper_presets["hand_closed"])
         if not ok:
             self.get_logger().error(f"PICK_OBJECT failed closing gripper: {msg}")
+            return False
+        time.sleep(0.5)
+
+        ok, msg = self.send_move_to_pose("arm_ready", duration_sec=1.5)
+        if not ok:
+            self.get_logger().error(f"PICK_OBJECT failed returning to 'arm_ready': {msg}")
             return False
 
         self.get_logger().info(f"✅ PICK_OBJECT completed for '{item_id}'.")

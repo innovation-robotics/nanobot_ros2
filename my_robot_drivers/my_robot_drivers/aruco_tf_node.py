@@ -11,6 +11,27 @@ import math
 deg_to_rad = math.pi / 180.0
 
 class ArucoLocalizationPublisher(Node):
+    def _make_params(self, low_light: bool):
+        p = (
+            cv2.aruco.DetectorParameters()
+            if hasattr(cv2.aruco, 'DetectorParameters')
+            else cv2.aruco.DetectorParameters_create()
+        )
+        p.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+        if low_light:
+            p.cornerRefinementWinSize = 5
+            p.cornerRefinementMaxIterations = 30
+            p.adaptiveThreshWinSizeMin = 3
+            p.adaptiveThreshWinSizeMax = 25
+            p.adaptiveThreshWinSizeStep = 4
+            p.adaptiveThreshConstant = 7.0
+            p.minMarkerPerimeterRate = 0.02
+            p.maxMarkerPerimeterRate = 4.0
+            p.polygonalApproxAccuracyRate = 0.05
+            p.maxErroneousBitsInBorderRate = 0.45
+            p.errorCorrectionRate = 0.7
+        return p
+    
     def __init__(self):
         super().__init__('aruco_localization_publisher')
 
@@ -34,19 +55,20 @@ class ArucoLocalizationPublisher(Node):
         # }
         self.marker_map_poses = {
             0: {'pos': np.array([0.0, 0.0, 0.1275]), 'rot': np.array([-45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},
-            1: {'pos': np.array([2.13, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},           
-            2: {'pos': np.array([2.13, 1.51, 0.1275]), 'rot': np.array([0.0, 0.0, 90.0 * deg_to_rad])}            
+            1: {'pos': np.array([0.76, 0.0, 0.1275]), 'rot': np.array([45.0*deg_to_rad, 180.0 * deg_to_rad, -90.0 * deg_to_rad])},           
+            2: {'pos': np.array([0.76, 1.12, 0.1275]), 'rot': np.array([0.0, 0.0, 90.0 * deg_to_rad])}            
         }
 
         # Initialize ArUco Detector
         dict_enum = getattr(cv2.aruco, self.dict_name, cv2.aruco.DICT_4X4_250)
         self.dictionary = cv2.aruco.getPredefinedDictionary(dict_enum)
 
-        if hasattr(cv2.aruco, 'DetectorParameters'):
-            self.params = cv2.aruco.DetectorParameters()
-        else:
-            self.params = cv2.aruco.DetectorParameters_create()
-        self.params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+        self.declare_parameter('low_light_enhance', False)
+        self._clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+
+        self.normal_params = self._make_params(False)
+        self.low_light_params = self._make_params(True)
+
 
         if hasattr(cv2.aruco, 'ArucoDetector'):
             self.detector = cv2.aruco.ArucoDetector(self.dictionary, self.params)
@@ -80,11 +102,24 @@ class ArucoLocalizationPublisher(Node):
             return
 
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        use_low_light = bool(self.get_parameter('low_light_enhance').value)
         
-        if self.detector is not None:
-            corners, ids, _ = self.detector.detectMarkers(cv_image)
+        if use_low_light:
+            lab = cv2.cvtColor(cv_image, cv2.COLOR_BGR2LAB)
+            l_chan, a_chan, b_chan = cv2.split(lab)
+            l_eq = self._clahe.apply(l_chan)
+            detect_image = cv2.cvtColor(cv2.merge((l_eq, a_chan, b_chan)), cv2.COLOR_LAB2BGR)
+            active_params = self.low_light_params
         else:
-            corners, ids, _ = cv2.aruco.detectMarkers(cv_image, self.dictionary, parameters=self.params)
+            detect_image = cv_image
+            active_params = self.normal_params
+
+        if self.detector is not None:
+            self.detector.setDetectorParameters(active_params)
+            corners, ids, _ = self.detector.detectMarkers(detect_image)
+        else:
+            corners, ids, _ = cv2.aruco.detectMarkers(detect_image, self.dictionary, parameters=active_params)
 
         if ids is not None:
             cv2.aruco.drawDetectedMarkers(cv_image, corners, ids)

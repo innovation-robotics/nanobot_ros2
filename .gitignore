@@ -1,4 +1,3 @@
-my_robot_drivers/config/esp32_cam_calibration.npz
-my_robot_drivers/my_robot_drivers/esp32_cam_calibration.npz
 *.pyc
 *.stl
+my_robot_drivers/config/esp32_cam_calibration_gemini.npz

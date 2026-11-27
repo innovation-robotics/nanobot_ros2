@@ -22,7 +22,7 @@ class ArmController(Node):
     def __init__(self):
         super().__init__('arm_controller')
 
-        self.declare_parameter('esp32_ip', '192.168.1.50')
+        self.declare_parameter('esp32_ip', '192.168.1.13')
         self.declare_parameter('arm_port', 8890)
         self.declare_parameter('gripper_port', 8891)
         self.declare_parameter('gripper_topic', '/arm_controller/gripper_angle')
@@ -124,6 +124,8 @@ class ArmController(Node):
         Compute target joint angles (in radians) for end-effector position (x, y, z) in link0 frame.
         Returns [a0, a1, a2] in radians, or None if out of reach.
         """
+        self.get_logger().info(f"x:{x*100.0:.1f}\ty:{y*100.0:.1f}\tz:{z*100.0:.1f}")
+        
         L1 = 0.165188
         L2 = 0.21
         tol = 1e-6
@@ -147,7 +149,7 @@ class ArmController(Node):
         C = math.acos(cos_C)
         O = math.atan2(m, n)
 
-        a0 = -1.0 * math.atan2(y, x)
+        a0 = -1.0 * math.atan2(x,y)
         a1 = -1.0 * (math.pi - O - A)
         S = math.pi - C - A
         a2 = -1.0 * (math.pi - S)

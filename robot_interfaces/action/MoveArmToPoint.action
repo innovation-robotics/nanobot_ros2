@@ -1,0 +1,14 @@
+# Goal (in link0 frame, meters)
+float32 x
+float32 y
+float32 z
+float32 duration_sec
+---
+# Result
+bool success
+string message
+---
+# Feedback
+float32 progress
+int32 current_step
+int32 total_steps

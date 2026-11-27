@@ -45,6 +45,12 @@ class RobotTask:
     duration: float = 2.0                    # Fallback delay if MoveGroup action server is offline
 
 class CornerTurnUTrack(Node):
+    # Helper method on CornerTurnUTrack:
+    def _resolve_speed_scale(self, speed_scale: Optional[float]) -> float:
+        if speed_scale is None:
+            return float(self.get_parameter('arm_speed_scale').value)
+        return float(speed_scale)
+
     def __init__(self):
         super().__init__('u_track_corner_turn')
 
@@ -54,6 +60,10 @@ class CornerTurnUTrack(Node):
         self.declare_parameter('max_angular_speed', 0.5)     # rad/s
         self.declare_parameter('min_angular_speed', 0.4)     # rad/s
         self.declare_parameter('waypoint_tolerance', 0.07)   # Meters
+        
+        # speed scaling for arm movement
+        self.declare_parameter('arm_speed_scale', 0.6)
+
         self.yaw_tolerance = 0.13                            # Radians (~7.5 deg)
 
         self.v_max = self.get_parameter('max_linear_speed').value
@@ -98,15 +108,15 @@ class CornerTurnUTrack(Node):
         # 2. DEFINE TASK PLAN QUEUE
         # ==========================================
         self.task_queue: List[RobotTask] = [
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.0, 0.60])),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.23, 0.52])),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=-math.pi),
             RobotTask(type=TaskType.PICK_OBJECT, item_id="Box_A"),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=-math.pi/2.0),
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.0, 0.35])),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.23, 0.35])),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=0.0),
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([2.13, 0.35])),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.60, 0.35])),
             RobotTask(type=TaskType.ROTATE_IN_PLACE, target_yaw=math.pi / 2),
-            RobotTask(type=TaskType.GO_TO, target_pos=np.array([2.13, 1.0])),
+            RobotTask(type=TaskType.GO_TO, target_pos=np.array([0.60, 0.595])),
             RobotTask(type=TaskType.PLACE, item_id="Box_A")
         ]
         
@@ -182,6 +192,8 @@ class CornerTurnUTrack(Node):
         siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
         cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         self.robot_yaw = math.atan2(siny_cosp, cosy_cosp)
+        # self.get_logger().info(f"x:{self.robot_pos[0]*100.0:.1f}\ty:{self.robot_pos[1]*100.0:.1f}\tyaw:{self.robot_yaw*180.0/math.pi:.1f}")
+
 
     def obj18_pose_callback(self, msg: PoseWithCovarianceStamped):
         self.obj18_pos = np.array([msg.pose.pose.position.x, msg.pose.pose.position.y])
@@ -200,7 +212,7 @@ class CornerTurnUTrack(Node):
         w_mag = np.clip(abs(w_calc), self.w_min, self.w_max)
         return math.copysign(w_mag, w_calc)
 
-    def move_arm_to_xyz_direct3(self, x: float, y: float, z: float, speed_scale: float = 0.5) -> bool:
+    def move_arm_to_xyz_direct3(self, x: float, y: float, z: float, speed_scale: Optional[float] = None) -> bool:
         """Solves direct position IK without orientation fighting."""
         ik_client = self.create_client(GetPositionIK, '/compute_ik')
 
@@ -248,19 +260,22 @@ class CornerTurnUTrack(Node):
         target_joints = dict(zip(joint_names, joint_positions))
 
         self.get_logger().info(f"✅ Found IK Solution! Joints: {target_joints}")
-        return self.send_joint_angles_to_movegroup("arm", target_joints, speed_scale)
 
-    def send_joint_angles_to_movegroup(self, group_name: str, joint_targets: dict, speed_scale: float = 0.5) -> bool:
+        scale = self._resolve_speed_scale(speed_scale)
+        return self.send_joint_angles_to_movegroup("arm", target_joints, scale)
+
+    def send_joint_angles_to_movegroup(self, group_name: str, joint_targets: dict, speed_scale: Optional[float] = None) -> bool:
         """Sends a dict of explicit joint targets directly to MoveGroup."""
         if not self._move_group_client.wait_for_server(timeout_sec=2.0):
             return False
 
+        scale = self._resolve_speed_scale(speed_scale)
         goal_msg = MoveGroup.Goal()
         goal_msg.request.group_name = group_name
         goal_msg.request.num_planning_attempts = 1
         goal_msg.request.allowed_planning_time = 1.0
-        goal_msg.request.max_velocity_scaling_factor = speed_scale
-        goal_msg.request.max_acceleration_scaling_factor = speed_scale
+        goal_msg.request.max_velocity_scaling_factor = scale
+        goal_msg.request.max_acceleration_scaling_factor = scale
 
         constraints = Constraints()
         for joint_name, target_val in joint_targets.items():
@@ -308,7 +323,7 @@ class CornerTurnUTrack(Node):
         return result_success
 
 
-    def send_joint_goal_to_movegroup(self, group_name: str, state_key: str, speed_scale: float = 0.7) -> bool:
+    def send_joint_goal_to_movegroup(self, group_name: str, state_key: str, speed_scale: Optional[float] = None) -> bool:
         """Sends joint constraints to MoveGroup Action Server with controlled velocity."""
         if not self._move_group_client.wait_for_server(timeout_sec=2.0):
             self.get_logger().warn(f"MoveGroup action server unavailable. Skipping joint state '{state_key}'.")
@@ -318,13 +333,14 @@ class CornerTurnUTrack(Node):
             self.get_logger().error(f"State '{state_key}' not found in srdf_states map.")
             return False
 
+        scale = self._resolve_speed_scale(speed_scale)
         goal_msg = MoveGroup.Goal()
         goal_msg.request.group_name = group_name
         goal_msg.request.num_planning_attempts = 5
         goal_msg.request.allowed_planning_time = 5.0
 
-        goal_msg.request.max_velocity_scaling_factor = speed_scale
-        goal_msg.request.max_acceleration_scaling_factor = speed_scale
+        goal_msg.request.max_velocity_scaling_factor = scale
+        goal_msg.request.max_acceleration_scaling_factor = scale
 
         # Construct Joint Constraints
         constraints = Constraints()
